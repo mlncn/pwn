@@ -1,0 +1,15 @@
+<?php
+// $Id: pwn.install,v 1.1 2009/07/20 13:44:57 agaric Exp $
+
+/**
+ * @file
+ * Installation file for Permit own permissions module.
+ */
+
+function pwn_install() {
+  drupal_set_message(t('Permit own permissions installed successfully.  Grant <em>share permissions</em> (not <em>administer permissions</em>) <a href="@permissions_url">to a role</a> to empower users in that role to administer (for all roles) only permissions that they themselves have.', array('@permissions_url' => url('admin/user/permissions'))));
+}
+
+function pwn_uninstall() {
+  drupal_set_message(t('Uninstalled Permit own permissions.'));
+}

@@ -1,0 +1,20 @@
+<?php
+// $Id: pwn.module,v 1.1 2009/07/20 13:44:57 agaric Exp $
+
+/**
+ * @file
+ * Permits privileged users to control any owned permission for all roles.
+ *
+ * Allows the delegation of delegation.  Users in roles granted 'share
+ * permissions' permission can access the permissions administration page the
+ * same way a user with 'administer permissions' can, but they can only see
+ * permissions that exist in one of their roles.  This module relies on
+ * menu_alter and form_alter.
+ */
+
+/**
+ * Implements hook_perm().
+ */
+function pwn_perm() {
+  return array('share permissions');
+}

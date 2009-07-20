@@ -1,0 +1,43 @@
+<?php
+// $Id: pwn.test,v 1.1 2009/07/20 13:44:57 agaric Exp $
+
+/**
+ * @file
+ * Test file for Permit own permissions module.
+ */
+
+class PwnTestCase extends DrupalWebTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => t('Permit own permissions'),
+      'description' => t('[pwn] Permit own permissions'),
+      'group' => t('pwn tests'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('pwn');
+    // Create a new page
+    $node = new stdClass();
+    $node->title = '';
+    $node->teaser = t('Teaser text');
+    $node->body = t('Here is the body of the page');
+    $node->uid = 1;
+    $node->type = 'page';
+    $node->status = 1;
+    $node->promote = 0;
+    node_save($node);
+    variable_set('pwn_nid1', $node->nid);
+    $node->title = t('Node @id', array('@id' => $node->nid));
+    node_save($node);
+  }
+
+  function tearDown() {
+    $nid = variable_get('pwn_nid1', NULL);
+    if ($nid) {
+      node_delete($nid);
+      variable_del('votingapi_nid1');
+    }
+    parent::tearDown();
+  }
+}
