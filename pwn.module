@@ -23,5 +23,6 @@ function pwn_perm() {
  * Implements hook_menu_alter().
  */
 function pwn_menu_alter(&$items) {
-  drupal_set_message('<pre>'.var_export($items['admin/user/permissions'],TRUE).'</pre>'); //@debug 
+  $items['admin/user/permissions']['access arguments'][] = 'share permissions';
 }
+
