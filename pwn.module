@@ -26,3 +26,44 @@ function pwn_menu_alter(&$items) {
   $items['admin/user/permissions']['access arguments'][] = 'share permissions';
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter() for user_admin_perm form.
+ */
+function pwn_form_user_admin_perm_alter(&$form, &$form_state) {
+  $form['#validate'][] = 'pwn_form_user_admin_perm_validate';
+  // If user does not have 'share permissions' or DOES have 'administer
+  // permissions', bail right away
+  if (!user_access('share permissions')
+   || user_access('administer permissions')) {
+   return;
+  }
+drupal_set_message('<pre>'.var_export($form,TRUE).'</pre>'); //@debug 
+
+$perms = array(
+  'access comments',
+  'administer menu',
+  'edit own story content',
+  'edit webforms',
+  'access administration menu',
+  'display drupal links',
+);
+
+  $rolecount = count($form['checkboxes']);
+  for ($i = 1; $i <= $rolecount; $i++) {
+    $form[$i] = array(); // We are not overwriting anything, don't worry.
+    $form[$i]['#type'] = 'value';
+    $form[$i]['#value'] = array();
+    foreach ($perms as $perm) {
+      $form[$i]['#value'][$perm] = (in_array($perm, $form['checkboxes'][$i]['#default_value'])) ? $perm : '';
+      unset($form['checkboxes'][$i]['#options'][$perm]);
+    }
+  }
+}
+
+/**
+ * Abuse the validation opportunity to throw values back into form_state.
+ */
+function pwn_form_user_admin_perm_validate(&$form, &$form_state) {
+// drupal_set_message('<pre>'.var_export($form,TRUE).'</pre>'); //@debug 
+drupal_set_message('<pre>'.var_export($form_state,TRUE).'</pre>'); //@debug 
+}
