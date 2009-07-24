@@ -23,6 +23,7 @@ function pwn_perm() {
  * Implements hook_menu_alter().
  */
 function pwn_menu_alter(&$items) {
+  $items['admin/user/permissions']['access callback'] = 'pwn_user_access_any';
   $items['admin/user/permissions']['access arguments'][] = 'share permissions';
 }
 
@@ -30,33 +31,50 @@ function pwn_menu_alter(&$items) {
  * Implements hook_form_FORM_ID_alter() for user_admin_perm form.
  */
 function pwn_form_user_admin_perm_alter(&$form, &$form_state) {
-  $form['#validate'][] = 'pwn_form_user_admin_perm_validate';
   // If user does not have 'share permissions' or DOES have 'administer
   // permissions', bail right away
   if (!user_access('share permissions')
    || user_access('administer permissions')) {
-   return;
+    return;
   }
-drupal_set_message('<pre>'.var_export($form,TRUE).'</pre>'); //@debug 
-
-$perms = array(
-  'access comments',
-  'administer menu',
-  'edit own story content',
-  'edit webforms',
-  'access administration menu',
-  'display drupal links',
-);
-
+  $form['#validate'][] = 'pwn_form_user_admin_perm_validate';
   $rolecount = count($form['checkboxes']);
+  // Place to save the default values of the options we will delete.
+  $form['pwnd'] = array();
+  $form['pwnd']['#type'] = 'value';
+  $form['pwnd']['#value'] = array();
   for ($i = 1; $i <= $rolecount; $i++) {
-    $form[$i] = array(); // We are not overwriting anything, don't worry.
-    $form[$i]['#type'] = 'value';
-    $form[$i]['#value'] = array();
-    foreach ($perms as $perm) {
-      $form[$i]['#value'][$perm] = (in_array($perm, $form['checkboxes'][$i]['#default_value'])) ? $perm : '';
-      unset($form['checkboxes'][$i]['#options'][$perm]);
+    $form['pwnd']['#value'][$i] = array();
+    foreach ($form['checkboxes'][$i]['#options'] as $perm => $permval) {
+      // If the user doesn't have this permission, don't let em set it.
+      if (!user_access($perm)) {
+        // Remove it from the main form.
+        unset($form['checkboxes'][$i]['#options'][$perm]);
+        // Add it to our hidden form values set to the existing value.
+        $form['pwnd']['#value'][$i][$perm] = 
+          (in_array($perm, $form['checkboxes'][$i]['#default_value']))
+          ? $perm
+          : 0;
+        // Cosmetic: Get rid of listing.
+        unset($form['permission'][$perm]);
+      }
     }
+  }
+  // If two keys in a row are numeric (title rows) delete first (empty) one.
+  $prevkey = NULL;
+  foreach ($form['permission'] as $key => $value) {
+    if (is_numeric($key)) {
+      if ($prevkey !== NULL) {
+        unset($form['permission'][$prevkey]);
+      }
+      $prevkey = $key;
+    }
+    else {
+      $prevkey = NULL;
+    }
+  }
+  if ($prevkey !== NULL) {
+    unset($form['permission'][$prevkey]);
   }
 }
 
@@ -64,6 +82,27 @@ $perms = array(
  * Abuse the validation opportunity to throw values back into form_state.
  */
 function pwn_form_user_admin_perm_validate(&$form, &$form_state) {
-// drupal_set_message('<pre>'.var_export($form,TRUE).'</pre>'); //@debug 
-drupal_set_message('<pre>'.var_export($form_state,TRUE).'</pre>'); //@debug 
+  foreach ($form_state['values']['pwnd'] as $i => $pwnd) {
+    $form_state['values'][$i] = array_merge($form_state['values'][$i], $pwnd);
+  }
+}
+
+/**
+ * Returns true if a user has any of the passed-in permissions.
+ *
+ * A replacement for the default user_access callback, this function takes any
+ * number of strings as passed in by the 'access arguments' menu.
+ *
+ * Potential Agaric Utility (_au_) function, although this could just as easily
+ * be hard-coded in the function and nothing passed in.
+ */
+function pwn_user_access_any() {
+  $perms = func_get_args();
+  foreach ($perms as $perm) {
+    if (user_access($perm)) {
+      return TRUE;
+    }
+  }
+  // The current user had none of the permissions.
+  return FALSE;
 }
