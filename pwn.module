@@ -15,22 +15,27 @@
 /**
  * Implements hook_perm().
  */
-function pwn_perm() {
-  return array('share permissions');
+function pwn_permission() {
+  return array(
+    'share permissions' =>  array(
+      'title' => t('Share permissions'),
+      'description' => t('A lesser form of Administer Permissions that allows only for adding permissions to other roles that the current user has, and none that she does\'t have.'),
+    )
+  );
 }
 
 /**
  * Implements hook_menu_alter().
  */
 function pwn_menu_alter(&$items) {
-  $items['admin/user/permissions']['access callback'] = 'pwn_user_access_any';
-  $items['admin/user/permissions']['access arguments'][] = 'share permissions';
+  $items['admin/config/people/permissions']['access callback'] = 'pwn_user_access_any';
+  $items['admin/config/people/permissions']['access arguments'][] = 'share permissions';
 }
 
 /**
  * Implements hook_form_FORM_ID_alter() for user_admin_perm form.
  */
-function pwn_form_user_admin_perm_alter(&$form, &$form_state) {
+function pwn_form_user_admin_permissions_alter(&$form, &$form_state) {
   // If user does not have 'share permissions' or DOES have 'administer
   // permissions', bail right away
   if (!user_access('share permissions')

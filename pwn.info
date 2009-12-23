@@ -2,4 +2,5 @@
 name = Permit own permissions
 description = "[pwn] Users privileged to 'share permissions' can grant to (or revoke from) any role any permission they possess."
 package = Administration
-core = 6.x
+core = 7.x
+files[] = pwn.module
